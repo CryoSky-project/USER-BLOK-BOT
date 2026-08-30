@@ -17,9 +17,9 @@ API_ID = os.getenv("API_ID")
 if API_ID:
     API_ID = int(API_ID)
 else:
-    API_ID = 25266965
+    API_ID = 
 
-API_HASH = os.getenv("API_HASH", "b4ddf909709ed810a0e49e410ab0ab24")
+API_HASH = os.getenv("API_HASH", "")
 
 
 def get_latest_session():
