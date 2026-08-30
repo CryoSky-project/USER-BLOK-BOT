@@ -1093,7 +1093,7 @@ async def get_terminal_page():
                     </div>
                 </div>
                 <div class="flex gap-2">
-                    <button onclick="runCmd('fix.py')" class="bg-amber-600 hover:bg-amber-500 text-white font-semibold py-2 px-4 rounded-xl flex items-center gap-2 transition">
+                    <button onclick="runCmd('login.py')" class="bg-amber-600 hover:bg-amber-500 text-white font-semibold py-2 px-4 rounded-xl flex items-center gap-2 transition">
                         <i class="fa-solid fa-phone"></i> Phone Login
                     </button>
                     <button onclick="runCmd('qr.py')" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 px-4 rounded-xl flex items-center gap-2 transition">
@@ -1215,10 +1215,10 @@ async def websocket_terminal(websocket: WebSocket):
                     active_process.stdin.write(data.encode())
                     await active_process.stdin.drain()
             
-            # Subprocess-larni ishga tushirish (fix.py yoki qr.py)
+            # Subprocess-larni ishga tushirish (login.py yoki qr.py)
             elif msg_type == "run_cmd":
                 cmd = msg.get("cmd")
-                if cmd in ["fix.py", "qr.py"]:
+                if cmd in ["login.py", "qr.py"]:
                     if active_process:
                         try:
                             active_process.terminate()

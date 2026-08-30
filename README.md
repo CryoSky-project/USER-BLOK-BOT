@@ -18,7 +18,7 @@ Loyiha **1 Userbot** (kanal a'zolarini yig'ib, botlarga taqsimlash uchun), **20 
   * **4 soniyalik navbat yig'ish**: Har 4 soniyada 150 kishining ID-sini yig'ib, botlarning navbatini to'ldiradi.
   * **Ko'p tilli qo'llab-quvvatlash (Lang Support)**: Tizim to'liq **O'zbek (uz)**, **Ingliz (en)** va **Rus (ru)** tillarida ishlaydi. Tilni `.lang <kod>` komandasi orqali yoki veb-paneldan o'zgartirish mumkin.
   * **Veb-panel serveri**: O'z ichida FastAPI serverini (sukut bo'yicha `8080` portida) ishga tushiradi.
-  * **Render platformasiga moslik**: Render bergan `PORT` o'zgaruvchisini avtomatik o'qiqiydi va **har 10 daqiqada o'ziga HTTP GET so'rovini yuborib (Self-Ping)**, serverning o'chib qolmasligini (uxlamasligini) ta'minlaydi. 🔄
+  * **Render platformasiga moslik**: Render bergan `PORT` o'zgaruvchisini avtomatik o'qiydi va **har 10 daqiqada o'ziga HTTP GET so'rovini yuborib (Self-Ping)**, serverning o'chib qolmasligini (uxlamasligini) ta'minlaydi. 🔄
   * **Interaktiv Veb Terminal**: Veb-panelda WebSocket asosida ishlaydigan terminal mavjud. U orqali real vaqtda loglarni ko'rish va yangi akkauntlarni to'g'ridan-to'g'ri brauzerdan ulab (telefon/kod yozib) boshqarish mumkin. 📟
 
 ---
@@ -32,19 +32,19 @@ Loyiha **1 Userbot** (kanal a'zolarini yig'ib, botlarga taqsimlash uchun), **20 
 
 ---
 
-### 3. 🔑 `fix.py`
-* **Bu nima uchun kerak:** Telefon raqami orqali kirishga mo'ljallangan skript (sobiq `login.py`).
+### 3. 🔑 `login.py`
+* **Bu nima uchun kerak:** Telefon raqami orqali kirishga mo'ljallangan skript (sobiq `fix.py`).
 * **Nima qiladi:** Har bir akkaunt uchun telefon raqami bilan nomlanadigan sessiya faylini (masalan: `session_998901234567.session`) yaratadi.
 
 ---
 
 ### 4. 🔑 `qr.py`
-* **Bu nima uchun kerak:** Terminalda QR-kodni skanerlab kirish skripti (sobiq `qr_login.py`).
+* **Bu nima uchun kerak:** Terminalda QR-kodni skanerlab kirish skripti.
 
 ---
 
-### 5. 🛠️ `auth_step.py`
-* **Bu nima uchun kerak:** Tizimga kirish logikasi uchun yordamchi fayl.
+### 5. 🛠️ `fix.py`
+* **Bu nima uchun kerak:** Tizimga bosqichma-bosqich kirish logikasi uchun yordamchi fayl (sobiq `auth_step.py`).
 
 ---
 
@@ -52,8 +52,8 @@ Loyiha **1 Userbot** (kanal a'zolarini yig'ib, botlarga taqsimlash uchun), **20 
 Skriptni yoqqandan so'ng brauzer orqali `http://localhost:8080` yoki Render havolangiz bo'yicha kirsangiz, quyidagi imkoniyatlar mavjud bo'ladi:
 
 1. **📈 Interaktiv Dashbord**: Bloklanganlarning umumiy soni, faol botlarning soni va kanal ma'lumotlari real vaqtda yangilanib turadi.
-2. **📱 QR-kod orqali vebdan kirish**: Sayt sahifasida QR-kod paydo bo'ladi. Uni telefon bilan skanerlab, terminalsiz yangi Telegram sessiyalarini tezda qo'shish mumkin.
-3. **📟 Interaktiv Veb-Terminal**: Saytdagi "Web Terminal" tugmasi orqali alohida sahifa ochiladi. U yerda tizim loglari ko'rinib turadi, shuningdek, "Phone Login" yoki "QR Login" tugmalarini bosib, yangi akkauntlarning telefon raqami va faollashtirish kodlarini to'g'ridan-to'g'ri saytning o'zida yozib ulanish mumkin! ⌨️
+2. **📱 QR-kod orqali vebdan kirish**: Sayt sahifasida QR-kod paydo bo'ladi. Uni telefon bilan skanerlab, terminalsiz yeni Telegram sessiyalarini tezda qo'shish mumkin.
+3. **📟 Interaktiv Veb-Terminal**: Saytdagi "Web Terminal" tugmasi orqali alohida sahifa ochiladi. U yerda tizim loglari ko'rinib turadi, shuningdek, "Phone Login" (login.py) yoki "QR Login" (qr.py) tugmalarini bosib, yangi akkauntlarning telefon raqami va faollashtirish kodlarini to'g'ridan-to'g'ri saytning o'zida yozib ulanish mumkin! ⌨️
 4. **🤖 Botlarni boshqarish**: 20 ta botning har birining holatini (Faol, Spam-blok, Kutish vaqti) va shaxsiy bloklanganlar sonini ko'rish mumkin.
 5. **📢 Kanallar ro'yxati**: Userbot qo'shilgan barcha kanallar ro'yxati saytda chiqadi, havola yozmasdan bir bosish bilan tozalashni boshlashingiz mumkin.
 6. **🌐 Til tanlash**: Veb-panel interfeysini o'zbekcha, inglizcha va ruscha tillarga bir soniyada o'zgartirish mumkin.
