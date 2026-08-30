@@ -17,7 +17,7 @@ API_ID = os.getenv("API_ID")
 if API_ID:
     API_ID = int(API_ID)
 else:
-    API_ID = 
+    API_ID = None
 
 API_HASH = os.getenv("API_HASH", "")
 
