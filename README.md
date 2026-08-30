@@ -2,7 +2,7 @@
 
 Ushbu loyiha eski yoki keraksiz Telegram kanallarini sotishga yoki boshqa maqsadlarga tayyorlash uchun uning a'zolarini (odamlarini) tez va xavfsiz bloklab tozalashga mo'ljallangan.
 
-Loyiha **1 Userbot** (kanal a'zolarini yig'ib, botlarga taqsimlash uchun), **20 ta umumiy Bot** (odamlarni Telegram Rate Limit cheklovlaridan oshmay bloklash uchun) va **FastAPI Veb-Paneli** asosida ishlaydi.
+Loyiha **1 Userbot** (kanal a'zolarini yig'ib, botlarga taqsimlash uchun), **20 ta umumiy Bot** (odamlarni Telegram Rate Limit cheklovlaridan oshmay bloklash uchun) va **FastAPI Veb-Paneli** (Interaktiv Terminal bilan) asosida ishlaydi.
 
 ---
 
@@ -18,14 +18,15 @@ Loyiha **1 Userbot** (kanal a'zolarini yig'ib, botlarga taqsimlash uchun), **20 
   * **4 soniyalik navbat yig'ish**: Har 4 soniyada 150 kishining ID-sini yig'ib, botlarning navbatini to'ldiradi.
   * **Ko'p tilli qo'llab-quvvatlash (Lang Support)**: Tizim to'liq **O'zbek (uz)**, **Ingliz (en)** va **Rus (ru)** tillarida ishlaydi. Tilni `.lang <kod>` komandasi orqali yoki veb-paneldan o'zgartirish mumkin.
   * **Veb-panel serveri**: O'z ichida FastAPI serverini (sukut bo'yicha `8080` portida) ishga tushiradi.
-  * **Render platformasiga moslik**: Render bergan `PORT` o'zgaruvchisini avtomatik o'qiydi va **har 10 daqiqada o'ziga HTTP GET so'rovini yuborib (Self-Ping)**, serverning o'chib qolmasligini (uxlamasligini) ta'minlaydi. 🔄
+  * **Render platformasiga moslik**: Render bergan `PORT` o'zgaruvchisini avtomatik o'qiqiydi va **har 10 daqiqada o'ziga HTTP GET so'rovini yuborib (Self-Ping)**, serverning o'chib qolmasligini (uxlamasligini) ta'minlaydi. 🔄
+  * **Interaktiv Veb Terminal**: Veb-panelda WebSocket asosida ishlaydigan terminal mavjud. U orqali real vaqtda loglarni ko'rish va yangi akkauntlarni to'g'ridan-to'g'ri brauzerdan ulab (telefon/kod yozib) boshqarish mumkin. 📟
 
 ---
 
 ### 2. ⚙️ `config.py`
 * **Bu nima uchun kerak:** Loyihaning barcha **sozlamalari va ma'lumotlarini saqlaydigan markaziy fayl**.
 * **Nima qiladi:**
-  * `.env` faylidan `API_ID` va `API_HASH` o'qiydi (topilmasa sukut bo'yicha qiymatlarni qo'llaydi).
+  * `.env` faylidan `API_ID` and `API_HASH` o'qiydi (topilmasa sukut bo'yicha qiymatlarni qo'llaydi).
   * **20 ta botning tokenlarini** to'g'ridan-to'g'ri o'zida saqlaydi (`BOT_TOKENS`).
   * **20 Sessiya rotatsiyasi**: Oxirgi 20 ta sessiya faylini nazorat qilib, eng yangisini avtomatik ravishda topib, yuklaydi.
 
@@ -52,9 +53,10 @@ Skriptni yoqqandan so'ng brauzer orqali `http://localhost:8080` yoki Render havo
 
 1. **📈 Interaktiv Dashbord**: Bloklanganlarning umumiy soni, faol botlarning soni va kanal ma'lumotlari real vaqtda yangilanib turadi.
 2. **📱 QR-kod orqali vebdan kirish**: Sayt sahifasida QR-kod paydo bo'ladi. Uni telefon bilan skanerlab, terminalsiz yangi Telegram sessiyalarini tezda qo'shish mumkin.
-3. **🤖 Botlarni boshqarish**: 20 ta botning har birining holatini (Faol, Spam-blok, Kutish vaqti) va shaxsiy bloklanganlar sonini ko'rish mumkin.
-4. **📢 Kanallar ro'yxati**: Userbot qo'shilgan barcha kanallar ro'yxati saytda chiqadi, havola yozmasdan bir bosish bilan tozalashni boshlashingiz mumkin.
-5. **🌐 Til tanlash**: Veb-panel interfeysini o'zbekcha, inglizcha va ruscha tillarga bir soniyada o'zgartirish mumkin.
+3. **📟 Interaktiv Veb-Terminal**: Saytdagi "Web Terminal" tugmasi orqali alohida sahifa ochiladi. U yerda tizim loglari ko'rinib turadi, shuningdek, "Phone Login" yoki "QR Login" tugmalarini bosib, yangi akkauntlarning telefon raqami va faollashtirish kodlarini to'g'ridan-to'g'ri saytning o'zida yozib ulanish mumkin! ⌨️
+4. **🤖 Botlarni boshqarish**: 20 ta botning har birining holatini (Faol, Spam-blok, Kutish vaqti) va shaxsiy bloklanganlar sonini ko'rish mumkin.
+5. **📢 Kanallar ro'yxati**: Userbot qo'shilgan barcha kanallar ro'yxati saytda chiqadi, havola yozmasdan bir bosish bilan tozalashni boshlashingiz mumkin.
+6. **🌐 Til tanlash**: Veb-panel interfeysini o'zbekcha, inglizcha va ruscha tillarga bir soniyada o'zgartirish mumkin.
 
 ---
 
