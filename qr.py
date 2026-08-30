@@ -12,12 +12,12 @@ BASE_DIR = Path(__file__).resolve().parent
 
 async def main():
     print("==================================================")
-    print("  Telegram QR-код арқылы кіру (QR Login)          ")
+    print("  Telegram QR-kod orqali kirish (QR Login)          ")
     print("==================================================")
-    print("1. Телефоныңыздан Telegram-ды ашыңыз")
-    print("2. Настройки (Баптаулар) -> Устройства (Құрылғылар)")
-    print("3. 'Подключить устройство' (Құрылғы қосу) батырмасын басыңыз")
-    print("4. Төмендегі QR-кодты сканерлеңіз:\n")
+    print("1. Telefoningizdan Telegram-ni oching")
+    print("2. Sozlamalar (Settings) -> Qurilmalar (Devices)")
+    print("3. 'Qurilmani ulash' (Link Desktop Device) tugmasini bosing")
+    print("4. Quyidagi QR-kodni skanerlang:\n")
 
     timestamp = int(time.time())
     session_name = str(BASE_DIR / f"session_qr_{timestamp}")
@@ -32,22 +32,22 @@ async def main():
     qr.add_data(qr_login.url)
     qr.print_ascii(invert=True)
     
-    print(f"\nСілтеме түрінде: {qr_login.url}\n")
-    print("QR-код сканерленуін күтуде (60 секунд)...")
+    print(f"\nHavola shaklida: {qr_login.url}\n")
+    print("QR-kod skanerlanishini kutmoqda (60 soniya)...")
 
     authorized = False
     try:
         user = await qr_login.wait(timeout=60)
-        print(f"\n[ЖЕТІСТІК] Сәтті кірдіңіз: {user.first_name} (@{user.username}) | ID: {user.id}")
+        print(f"\n[SUCCESS] Muvaffaqiyatli kirdingiz: {user.first_name} (@{user.username}) | ID: {user.id}")
         authorized = True
     except SessionPasswordNeededError:
-        print("\n[2FA] Аккаунтта 2FA құпиясөз орнатылған.")
-        pw = input("2FA Құпиясөзін енгізіңіз: ").strip()
+        print("\n[2FA] Akkauntda 2FA paroli o'rnatilgan.")
+        pw = input("2FA parolini kiriting: ").strip()
         user = await client.sign_in(password=pw)
-        print(f"\n[ЖЕТІСТІК] Сәтті кірдіңіз: {user.first_name} (@{user.username}) | ID: {user.id}")
+        print(f"\n[SUCCESS] Muvaffaqiyatli kirdingiz: {user.first_name} (@{user.username}) | ID: {user.id}")
         authorized = True
     except Exception as e:
-        print(f"\n[ҚАТЕ немесе УАҚЫТ АЯҚТАЛДЫ]: {e}")
+        print(f"\n[XATOLIK Yoki VAQT TUGADI]: {e}")
     finally:
         await client.disconnect()
         # If QR login failed/timed out, remove the unused session file

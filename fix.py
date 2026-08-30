@@ -10,12 +10,12 @@ BASE_DIR = Path(__file__).resolve().parent
 
 async def main():
     print("========================================")
-    print("  Telegram Userbot Login / Авторизация  ")
+    print("  Telegram Userbot Login / Avtorizatsiya  ")
     print("========================================")
     
-    phone = input("\nТелефон нөміріңізді енгізіңіз (+7700...): ").strip()
+    phone = input("\nTelefon raqamingizni kiriting (+998...): ").strip()
     if not phone:
-        print("[ERROR] Телефон нөмірі бос болмауы керек!")
+        print("[ERROR] Telefon raqami bo'sh bo'lmasligi kerak!")
         return
 
     # Clean phone number for filename
@@ -27,27 +27,27 @@ async def main():
     
     if await client.is_user_authorized():
         me = await client.get_me()
-        print(f"\n[OK] Бұл аккаунтқа кіріп тұрсыз: {me.first_name} (@{me.username}) | ID: {me.id}")
+        print(f"\n[OK] Ushbu akkauntga kirib turibsiz: {me.first_name} (@{me.username}) | ID: {me.id}")
         await client.disconnect()
         return
 
-    print(f"[{phone}] нөміріне растау коды сұралуда...")
+    print(f"[{phone}] raqamiga tasdiqlash kodi so'ralmoqda...")
     try:
         await client.send_code_request(phone)
     except Exception as e:
-        print(f"[ERROR] Код сұрау қатесі: {e}")
+        print(f"[ERROR] Kod so'rash xatoligi: {e}")
         await client.disconnect()
         return
         
-    code = input("Telegram-ға келген 5 сандық кодты енгізіңіз: ").strip()
+    code = input("Telegram-ga kelgan 5 xonali kodni kiriting: ").strip()
     
     try:
         await client.sign_in(phone, code)
     except SessionPasswordNeededError:
-        password = input("2FA Құпиясөзін (Two-Step Verification Password) енгізіңіз: ")
+        password = input("2FA Parolini (Two-Step Verification Password) kiriting: ")
         await client.sign_in(password=password)
     except Exception as e:
-        print(f"[ERROR] Қате орын алды: {e}")
+        print(f"[ERROR] Xatolik yuz berdi: {e}")
         # Clean up failed session file
         await client.disconnect()
         try:
@@ -57,8 +57,8 @@ async def main():
         return
 
     me = await client.get_me()
-    print(f"\n[ЖЕТІСТІК] Сәтті қосылды! Аккаунт: {me.first_name} (@{me.username}) | ID: {me.id}")
-    print(f"Сессия файлы сақталды: {session_name}.session")
+    print(f"\n[SUCCESS] Muvaffaqiyatli ulandi! Akkaunt: {me.first_name} (@{me.username}) | ID: {me.id}")
+    print(f"Sessiya fayli saqlandi: {session_name}.session")
     await client.disconnect()
 
 if __name__ == "__main__":

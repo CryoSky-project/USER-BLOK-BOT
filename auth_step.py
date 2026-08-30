@@ -13,6 +13,7 @@ def get_client():
     return TelegramClient(SESSION_FILE, API_ID, API_HASH)
 
 async def send_code(phone: str):
+    """Tasdiqlash kodini yuborish."""
     client = get_client()
     await client.connect()
     try:
@@ -23,16 +24,17 @@ async def send_code(phone: str):
         }
         with open(AUTH_STATE_FILE, "w", encoding="utf-8") as f:
             json.dump(state, f)
-        print(f"[OK] Растау коды {phone} нөміріне жіберілді!")
-        print("Telegram-ға келген 5 сандық кодты енгізіңіз.")
+        print(f"[OK] Tasdiqlash kodi {phone} raqamiga yuborildi!")
+        print("Telegram-ga kelgan 5 xonali kodni kiriting.")
     except Exception as e:
-        print(f"[ERROR] Код сұрауда қате: {e}")
+        print(f"[ERROR] Kod so'rashda xatolik: {e}")
     finally:
         await client.disconnect()
 
 async def verify_code(code: str, password: str = None):
+    """Kodni tekshirish va kirish."""
     if not AUTH_STATE_FILE.exists():
-        print("[ERROR] Алдымен send_code орындалуы керек!")
+        print("[ERROR] Avval send_code bajarilishi kerak!")
         return
 
     with open(AUTH_STATE_FILE, "r", encoding="utf-8") as f:
@@ -48,36 +50,37 @@ async def verify_code(code: str, password: str = None):
             await client.sign_in(phone=phone, code=code, phone_code_hash=phone_code_hash)
         except SessionPasswordNeededError:
             if not password:
-                print("[2FA_REQUIRED] Аккаунтта 2FA қосылған! 2FA құпиясөзіңізді енгізіңіз.")
+                print("[2FA_REQUIRED] Akkauntda 2FA yoqilgan! 2FA parolingizni kiriting.")
                 return
             await client.sign_in(password=password)
 
         me = await client.get_me()
-        print(f"[SUCCESS] Сәтті қосылды! Аккаунт: {me.first_name} (@{me.username}) | ID: {me.id}")
+        print(f"[SUCCESS] Muvaffaqiyatli ulandi! Akkaunt: {me.first_name} (@{me.username}) | ID: {me.id}")
         if AUTH_STATE_FILE.exists():
             AUTH_STATE_FILE.unlink()
     except Exception as e:
-        print(f"[ERROR] Кіру қатесі: {e}")
+        print(f"[ERROR] Kirishda xatolik: {e}")
     finally:
         await client.disconnect()
 
 async def verify_2fa(password: str):
+    """2FA parolini tekshirish."""
     client = get_client()
     await client.connect()
     try:
         await client.sign_in(password=password)
         me = await client.get_me()
-        print(f"[SUCCESS] Сәтті қосылды! Аккаунт: {me.first_name} (@{me.username}) | ID: {me.id}")
+        print(f"[SUCCESS] Muvaffaqiyatli ulandi! Akkaunt: {me.first_name} (@{me.username}) | ID: {me.id}")
         if AUTH_STATE_FILE.exists():
             AUTH_STATE_FILE.unlink()
     except Exception as e:
-        print(f"[ERROR] 2FA қатесі: {e}")
+        print(f"[ERROR] 2FA xatoligi: {e}")
     finally:
         await client.disconnect()
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("Қолдану: python auth_step.py [send_code <phone> | verify <code> [2fa_pass] | 2fa <pass>]")
+        print("Foydalanish: python auth_step.py [send_code <phone> | verify <code> [2fa_pass] | 2fa <pass>]")
         sys.exit(1)
 
     cmd = sys.argv[1]

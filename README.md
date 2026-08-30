@@ -1,69 +1,72 @@
 # 🤖 Telegram Userbot & Multi-Bot Channel Cleaner + Web Panel 🧹🌐
 
-Бұл жоба ескі немесе қажетсіз Telegram арналарын (каналдарын) сатылымға немесе басқа мақсаттарға дайындау үшін оның мүшелерін (адамдарын) жылдам әрі қауіпсіз түрде блоктап тазалауға арналған. 
+Ushbu loyiha eski yoki keraksiz Telegram kanallarini sotishga yoki boshqa maqsadlarga tayyorlash uchun uning a'zolarini (odamlarini) tez va xavfsiz bloklab tozalashga mo'ljallangan.
 
-Жоба **1 Userbot** (канал мүшелерін жинап, боттарға үлестіру үшін), **20 ортақ Bot** (адамдарды Telegram Rate Limit шектеулерінен аспай бөліп блоктау үшін) және **FastAPI Веб-Панелі** негізінде жұмыс істейді.
+Loyiha **1 Userbot** (kanal a'zolarini yig'ib, botlarga taqsimlash uchun), **20 ta umumiy Bot** (odamlarni Telegram Rate Limit cheklovlaridan oshmay bloklash uchun) va **FastAPI Veb-Paneli** asosida ishlaydi.
 
 ---
 
-## 📁 Файлдар құрылымы мен сипаттамасы 📑
+## 📁 Fayllar tuzilishi va tavsifi 📑
 
 ---
 
 ### 1. 🚀 `main.py`
-* **Бұл не үшін керек:** Жобаның **ең негізгі жұмыс істеу скрипті**.
-* **Не істейді:** 
-  * **Көп-ботты параллель блоктау**: Барлық боттар параллельді (concurrent) түрде жұмыс істейді. Әрқайсысы 2 секундта 1 адамнан блоктайды. Жалпы жылдамдық: **минутына 600 адам**.
-  * **Әліпбилік іздеу (10k Limit Bypass)**: Telegram-ның 10,000 адамдық шектеуінен өту үшін мүшелерді алдымен кәдімгідей, содан кейін **ағылшын және орыс әліпбиінің әріптері мен сандары бойынша** (`search=char`) автоматты түрде іздеп табады.
-  * **4 секундтық кезек жинау**: Әр 4 секунд сайын 150 адамның ID-ін жинап, боттардың кезегін толтырады.
-  * **Веб-панель сервері**: Өз ішінде FastAPI серверін (әдепкі бойынша `8080` портында) іске қосады.
-  * **Render платформасына сәйкестік**: Render берген `PORT` айнымалысын автоматты түрде оқиды және **әр 10 минут сайын өзіне HTTP GET сұранысын жіберіп (Self-Ping)**, сервердің өшіп қалмауын (ұйықтамауын) қамтамасыз етеді. 🔄
+* **Bu nima uchun kerak:** Loyihaning **eng asosiy ishchi skripti**.
+* **Nima qiladi:** 
+  * **Ko'p-botli parallel bloklash**: Barcha botlar parallel (concurrent) ravishde ishlaydi. Har biri 2 soniyada 1 kishini bloklaydi. Umumiy tezlik: **daqiqasiga 600 kishi**.
+  * **Alifboviy qidiruv (10k Limit Bypass)**: Telegram-ning 10,000 kishilik cheklovidan o'tish uchun a'zolarni dastlab oddiy, so'ngra **ingliz va rus alifbosining harflari hamda raqamlari bo'yicha** (`search=char`) avtomatik ravishda qidirib topadi.
+  * **4 soniyalik navbat yig'ish**: Har 4 soniyada 150 kishining ID-sini yig'ib, botlarning navbatini to'ldiradi.
+  * **Ko'p tilli qo'llab-quvvatlash (Lang Support)**: Tizim to'liq **O'zbek (uz)**, **Ingliz (en)** va **Rus (ru)** tillarida ishlaydi. Tilni `.lang <kod>` komandasi orqali yoki veb-paneldan o'zgartirish mumkin.
+  * **Veb-panel serveri**: O'z ichida FastAPI serverini (sukut bo'yicha `8080` portida) ishga tushiradi.
+  * **Render platformasiga moslik**: Render bergan `PORT` o'zgaruvchisini avtomatik o'qiydi va **har 10 daqiqada o'ziga HTTP GET so'rovini yuborib (Self-Ping)**, serverning o'chib qolmasligini (uxlamasligini) ta'minlaydi. 🔄
 
 ---
 
 ### 2. ⚙️ `config.py`
-* **Бұл не үшін керек:** Жобаның барлық **баптаулары мен деректерін сақтайтын орталық файл**.
-* **Не істейді:**
-  * `.env` файлынан `API_ID` және `API_HASH` оқиды (таппаса әдепкі мәндерді қолданады).
-  * **20 боттың токендерін** тікелей өзінде сақтайды (`BOT_TOKENS`).
-  * **20 Сессия ротациясы**: Соңғы 20 сессия файлын бақылап, ең жаңасын автоматты түрде тауып, жүктейді.
+* **Bu nima uchun kerak:** Loyihaning barcha **sozlamalari va ma'lumotlarini saqlaydigan markaziy fayl**.
+* **Nima qiladi:**
+  * `.env` faylidan `API_ID` va `API_HASH` o'qiydi (topilmasa sukut bo'yicha qiymatlarni qo'llaydi).
+  * **20 ta botning tokenlarini** to'g'ridan-to'g'ri o'zida saqlaydi (`BOT_TOKENS`).
+  * **20 Sessiya rotatsiyasi**: Oxirgi 20 ta sessiya faylini nazorat qilib, eng yangisini avtomatik ravishda topib, yuklaydi.
 
 ---
 
 ### 3. 🔑 `fix.py`
-* **Бұл не үшін керек:** Телефон нөмірі арқылы кіруге арналған скрипт.
-* **Не істейді:** Әр аккаунт үшін телефон нөмірімен аталатын сессия файлын (мысалы: `session_77001234567.session`) жасайды.
+* **Bu nima uchun kerak:** Telefon raqami orqali kirishga mo'ljallangan skript (sobiq `login.py`).
+* **Nima qiladi:** Har bir akkaunt uchun telefon raqami bilan nomlanadigan sessiya faylini (masalan: `session_998901234567.session`) yaratadi.
 
 ---
 
 ### 4. 🔑 `qr.py`
-* **Бұл не үшін керек:** Терминалда QR-кодты сканерлеп кіру скрипті.
+* **Bu nima uchun kerak:** Terminalda QR-kodni skanerlab kirish skripti (sobiq `qr_login.py`).
 
 ---
 
 ### 5. 🛠️ `auth_step.py`
-* **Бұл не үшін керек:** Кіру кезіндегі логикаға арналған көмекші файл.
+* **Bu nima uchun kerak:** Tizimga kirish logikasi uchun yordamchi fayl.
 
 ---
 
-## 🌐 Веб-панель мүмкіндіктері 📊
-Скриптті қосқаннан кейін браузер арқылы `http://localhost:8080` немесе Render сілтемеңіз бойынша кірсеңіз, мына мүмкіндіктер қолжетімді болады:
+## 🌐 Veb-panel imkoniyatlari 📊
+Skriptni yoqqandan so'ng brauzer orqali `http://localhost:8080` yoki Render havolangiz bo'yicha kirsangiz, quyidagi imkoniyatlar mavjud bo'ladi:
 
-1. **📈 Интерактивті Дашборд**: Блокталғандардың жалпы саны, белсенді боттардың саны және канал ақпараты нақты уақытта жаңартылып тұрады.
-2. **📱 QR-код арқылы вебтен кіру**: Сайт бетінде QR-код пайда болады. Оны телефонмен сканерлеп, терминалсыз-ақ жаңа Telegram сессияларын жылдам қосуға болады.
-3. **🤖 Боттарды басқару**: 20 боттың әрқайсысының күйін (Белсенді, Спам-блок, Күту уақыты) және жеке блокталғандар санын көруге болады.
-4. **📢 Каналдар тізімі**: Userbot қосылып тұрған барлық каналдар тізімі сайтта шығады, сілтеме жазбай-ақ бір басумен тазалауды бастай аласыз.
-
----
-
-## 💬 Telegram Командалары 📌
-Скрипт іске қосулы тұрғанда бақылау чатында келесі командалар жұмыс істейді:
-* `.help` — Командалар тізімі мен анықтамасын көрсету.
-* `.ping` — Пинг жылдамдығын және жүйенің рестарттан бергі жұмыс уақытын (uptime) көрсету.
-* `.add bots <канал_id>` — 20 ботты каналға қосып, әкімші қылу.
-* `.start <канал_id>` — Мақсатты каналды белгілеу.
-* `.start blok` — Блоктауды бастау.
-* `.stop` — Блоктауды тоқтату.
+1. **📈 Interaktiv Dashbord**: Bloklanganlarning umumiy soni, faol botlarning soni va kanal ma'lumotlari real vaqtda yangilanib turadi.
+2. **📱 QR-kod orqali vebdan kirish**: Sayt sahifasida QR-kod paydo bo'ladi. Uni telefon bilan skanerlab, terminalsiz yangi Telegram sessiyalarini tezda qo'shish mumkin.
+3. **🤖 Botlarni boshqarish**: 20 ta botning har birining holatini (Faol, Spam-blok, Kutish vaqti) va shaxsiy bloklanganlar sonini ko'rish mumkin.
+4. **📢 Kanallar ro'yxati**: Userbot qo'shilgan barcha kanallar ro'yxati saytda chiqadi, havola yozmasdan bir bosish bilan tozalashni boshlashingiz mumkin.
+5. **🌐 Til tanlash**: Veb-panel interfeysini o'zbekcha, inglizcha va ruscha tillarga bir soniyada o'zgartirish mumkin.
 
 ---
-Жұмысыңыз сәтті болсын! 🚀🔥
+
+## 💬 Telegram Komandalari 📌
+Skript ishga tushganda nazorat chatida quyidagi komandalar ishlaydi:
+* `.help` — Komandalar ro'yxati va tavsifini ko'rsatish.
+* `.ping` — Ping tezligi va tizimning ish vaqtini (uptime) ko'rsatish.
+* `.lang <uz|en|ru>` — Tizimning ishchi tilini o'zgartirish.
+* `.add bots <kanal_id>` — 20 ta botni kanalga qo'shib, admin qilish.
+* `.start <kanal_id>` — Maqsadli kanalni belgilash.
+* `.start blok` — Bloklashni boshlash.
+* `.stop` — Bloklashni to'xtatish.
+
+---
+Ishingizga omad tilaymiz! 🚀🔥
