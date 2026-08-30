@@ -8,7 +8,7 @@ import qrcode
 from datetime import datetime
 import aiohttp
 import uvicorn
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel
 from telethon import TelegramClient, events
@@ -47,6 +47,36 @@ scraper_task = None
 qr_client = None
 qr_login_instance = None
 qr_state = {"status": "idle", "qr_base64": None, "error": None}
+
+
+# =====================================================================
+# SYSTEM LOG BROADCAST STREAM FOR WEB TERMINAL
+# =====================================================================
+
+class LogBroadcastStream:
+    def __init__(self, original_stream):
+        self.original_stream = original_stream
+        self.listeners = set()
+
+    def write(self, data):
+        self.original_stream.write(data)
+        self.original_stream.flush()
+        if data.strip():
+            # Hamma websocket tinglovchilariga yuborish
+            for q in list(self.listeners):
+                try:
+                    loop = asyncio.get_running_loop()
+                    loop.call_soon_threadsafe(q.put_nowait, data)
+                except Exception:
+                    pass
+
+    def flush(self):
+        self.original_stream.flush()
+
+# Stdout va Stderr-ni qayta yo'naltirish
+sys.stdout = LogBroadcastStream(sys.stdout)
+sys.stderr = LogBroadcastStream(sys.stderr)
+
 
 # FastAPI ilovasini yaratish
 app = FastAPI(title="Telegram Channel Cleaner Web Panel")
@@ -621,6 +651,9 @@ async def get_dashboard():
                         <option value="ru">Русский (RU)</option>
                     </select>
                     
+                    <a href="/terminal" class="bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2 px-4 rounded-xl shadow transition flex items-center gap-2">
+                        <i class="fa-solid fa-terminal"></i> <span data-i18n="btn_terminal">Web Terminal</span>
+                    </a>
                     <button onclick="openQRModal()" class="bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-600 hover:to-indigo-700 text-white font-semibold py-2 px-4 rounded-xl shadow-lg transition flex items-center gap-2">
                         <i class="fa-solid fa-qrcode"></i> <span data-i18n="add_acc">Yangi Akkaunt Qo'shish</span>
                     </button>
@@ -742,6 +775,7 @@ async def get_dashboard():
                 uz: {
                     title: "Telegram Channel Cleaner",
                     subtitle: "Ko'p-botli kanalni tozalash va bloklash veb-paneli",
+                    btn_terminal: "Web Terminal",
                     add_acc: "Yangi Akkaunt Qo'shish",
                     reload_ch: "Kanallarni Yangilash",
                     kicked_members: "Bloklangan a'zolar",
@@ -766,6 +800,7 @@ async def get_dashboard():
                 en: {
                     title: "Telegram Channel Cleaner",
                     subtitle: "Multi-bot channel cleaning and blocking web panel",
+                    btn_terminal: "Web Terminal",
                     add_acc: "Add New Account",
                     reload_ch: "Refresh Channels",
                     kicked_members: "Blocked members",
@@ -790,6 +825,7 @@ async def get_dashboard():
                 ru: {
                     title: "Telegram Channel Cleaner",
                     subtitle: "Веб-панель для очистки и блокировки каналов с помощью мульти-ботов",
+                    btn_terminal: "Веб Терминал",
                     add_acc: "Добавить Аккаунт",
                     reload_ch: "Обновить Каналы",
                     kicked_members: "Заблокированные участники",
@@ -820,7 +856,6 @@ async def get_dashboard():
                 currentLang = lang;
                 localStorage.setItem("app_lang", lang);
                 
-                // Serverga ham xabar berish
                 fetch("/api/lang", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -835,7 +870,6 @@ async def get_dashboard():
                 });
             }
 
-            // Dastlabki tilni o'rnatish
             setTimeout(() => changeLanguage(currentLang), 100);
 
             let currentSelectedChannel = null;
@@ -1011,6 +1045,236 @@ async def get_dashboard():
     </html>
     """
     return HTMLResponse(content=html_content)
+
+
+@app.get("/terminal", response_class=HTMLResponse)
+async def get_terminal_page():
+    # Veb Terminal UI html fayli
+    html_content = """
+    <!DOCTYPE html>
+    <html lang="uz">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>CryoSky Web Terminal</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+        <style>
+            @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&display=swap');
+            body {
+                font-family: 'Fira Code', monospace;
+                background-color: #050b14;
+                color: #4ade80;
+            }
+            #terminal-output::-webkit-scrollbar {
+                width: 8px;
+            }
+            #terminal-output::-webkit-scrollbar-track {
+                background: #020617;
+            }
+            #terminal-output::-webkit-scrollbar-thumb {
+                background: #1e293b;
+                border-radius: 4px;
+            }
+            #terminal-output::-webkit-scrollbar-thumb:hover {
+                background: #334155;
+            }
+        </style>
+    </head>
+    <body class="p-6 h-screen flex flex-col justify-between">
+        <div class="flex flex-col h-full space-y-4">
+            <!-- Header -->
+            <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-slate-900/80 p-4 border border-slate-800 rounded-2xl">
+                <div class="flex items-center gap-3">
+                    <span class="text-2xl text-green-400"><i class="fa-solid fa-terminal animate-pulse"></i></span>
+                    <div>
+                        <h1 class="text-xl font-bold text-white">CryoSky Interactive Web Terminal</h1>
+                        <p class="text-xs text-slate-500">Live logs and interactive login controls</p>
+                    </div>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="runCmd('fix.py')" class="bg-amber-600 hover:bg-amber-500 text-white font-semibold py-2 px-4 rounded-xl flex items-center gap-2 transition">
+                        <i class="fa-solid fa-phone"></i> Phone Login
+                    </button>
+                    <button onclick="runCmd('qr.py')" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 px-4 rounded-xl flex items-center gap-2 transition">
+                        <i class="fa-solid fa-qrcode"></i> QR Login
+                    </button>
+                    <a href="/" class="bg-slate-800 hover:bg-slate-700 text-white font-semibold py-2 px-4 rounded-xl flex items-center gap-2 transition">
+                        <i class="fa-solid fa-arrow-left"></i> Dashboard
+                    </a>
+                </div>
+            </header>
+
+            <!-- Terminal Output -->
+            <div id="terminal-output" class="flex-1 bg-black/90 p-4 border border-slate-800 rounded-2xl overflow-y-auto space-y-1 select-text">
+                <div class="text-slate-500">[SYSTEM] Terminal yuklanmoqda...</div>
+            </div>
+
+            <!-- Input Prompt -->
+            <div class="flex items-center bg-black border border-slate-800 rounded-2xl p-4 gap-3">
+                <span class="text-sky-400 font-bold">CryoSky@userbot:~$</span>
+                <input type="text" id="terminal-input" onkeydown="handleInput(event)" class="flex-1 bg-transparent text-green-400 focus:outline-none border-none p-0" placeholder="Type input and press Enter..." autofocus autocomplete="off"/>
+            </div>
+        </div>
+
+        <script>
+            let ws = null;
+            const output = document.getElementById("terminal-output");
+            const input = document.getElementById("terminal-input");
+
+            function connect() {
+                const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+                ws = new WebSocket(`${protocol}//${window.location.host}/ws/terminal`);
+                
+                ws.onopen = () => {
+                    output.innerHTML = "";
+                    writeLine("[SYSTEM] Web Terminalga muvaffaqiyatli ulandi! Tizim loglari quyida ko'rsatiladi.\\n");
+                };
+                
+                ws.onmessage = (event) => {
+                    const msg = JSON.parse(event.data);
+                    if (msg.type === "stdout") {
+                        writeLine(msg.data);
+                    }
+                };
+                
+                ws.onclose = () => {
+                    writeLine("\\n[SYSTEM] WebSocket ulanishi uzildi. Qayta ulanishga harakat qilinmoqda...\\n");
+                    setTimeout(connect, 3000);
+                };
+            }
+
+            function writeLine(text) {
+                const cleanText = text.replace(/\\n/g, "<br>").replace(/\\r/g, "");
+                const span = document.createElement("span");
+                span.innerHTML = cleanText;
+                output.appendChild(span);
+                output.scrollTop = output.scrollHeight;
+            }
+
+            function handleInput(event) {
+                if (event.key === "Enter") {
+                    const val = input.value;
+                    input.value = "";
+                    
+                    // Write echo of command to terminal
+                    writeLine(`<span class="text-white">${val}</span>\\n`);
+                    
+                    // Send to websocket
+                    ws.send(JSON.stringify({ type: "stdin", data: val }));
+                }
+            }
+
+            function runCmd(cmd) {
+                output.innerHTML = "";
+                writeLine(`[SYSTEM] Script boshlanmoqda: ${cmd}...\\n`);
+                ws.send(JSON.stringify({ type: "run_cmd", cmd: cmd }));
+            }
+
+            connect();
+        </script>
+    </body>
+    </html>
+    """
+    return HTMLResponse(content=html_content)
+
+
+@app.websocket("/ws/terminal")
+async def websocket_terminal(websocket: WebSocket):
+    await websocket.accept()
+    
+    # Broadcast queue yaratish
+    queue = asyncio.Queue()
+    sys.stdout.listeners.add(queue)
+    sys.stderr.listeners.add(queue)
+    
+    # Tizim loglarini websocketga uzatish vazifasi
+    async def log_streamer():
+        try:
+            while True:
+                log_data = await queue.get()
+                await websocket.send_json({"type": "stdout", "data": log_data})
+        except asyncio.CancelledError:
+            pass
+        except Exception as e:
+            print(f"Web socket streamer xatosi: {e}")
+            
+    stream_task = asyncio.create_task(log_streamer())
+    
+    active_process = None
+    
+    try:
+        while True:
+            msg = await websocket.receive_json()
+            msg_type = msg.get("type")
+            
+            # Stdin yuborish subprocess-ga
+            if msg_type == "stdin" and active_process:
+                data = msg.get("data", "") + "\n"
+                if active_process.stdin:
+                    active_process.stdin.write(data.encode())
+                    await active_process.stdin.drain()
+            
+            # Subprocess-larni ishga tushirish (fix.py yoki qr.py)
+            elif msg_type == "run_cmd":
+                cmd = msg.get("cmd")
+                if cmd in ["fix.py", "qr.py"]:
+                    if active_process:
+                        try:
+                            active_process.terminate()
+                        except:
+                            pass
+                            
+                    # Asosiy loglar uzatishini to'xtatish
+                    stream_task.cancel()
+                    
+                    script_path = os.path.join(BASE_DIR, cmd)
+                    active_process = await asyncio.create_subprocess_exec(
+                        sys.executable, script_path,
+                        stdin=asyncio.subprocess.PIPE,
+                        stdout=asyncio.subprocess.PIPE,
+                        stderr=asyncio.subprocess.PIPE
+                    )
+                    
+                    await websocket.send_json({"type": "stdout", "data": f"[SYSTEM] {cmd} ishga tushirildi. Stdin ochiq.\\r\\n"})
+                    
+                    # Subprocess oqimlarini o'qish
+                    async def read_stream(stream, name):
+                        try:
+                            while True:
+                                line = await stream.readline()
+                                if not line:
+                                    break
+                                await websocket.send_json({"type": "stdout", "data": line.decode()})
+                        except Exception as e:
+                            print(f"Subprocess oqimini o'qishda xatolik {name}: {e}")
+                            
+                    asyncio.create_task(read_stream(active_process.stdout, "stdout"))
+                    asyncio.create_task(read_stream(active_process.stderr, "stderr"))
+                    
+                    # Subprocess tugashini kutish
+                    async def wait_process():
+                        nonlocal active_process, stream_task
+                        code = await active_process.wait()
+                        await websocket.send_json({"type": "stdout", "data": f"\\r\\n[SYSTEM] Skript tugadi. Chiqish kodi: {code}\\r\\n"})
+                        active_process = None
+                        
+                        # Asosiy loglarni qayta boshlash
+                        stream_task = asyncio.create_task(log_streamer())
+                        
+                    asyncio.create_task(wait_process())
+                    
+    except WebSocketDisconnect:
+        print("Web terminal aloqasi uzildi")
+    finally:
+        sys.stdout.listeners.discard(queue)
+        sys.stderr.listeners.discard(queue)
+        stream_task.cancel()
+        if active_process:
+            try:
+                active_process.terminate()
+            except:
+                pass
 
 
 @app.get("/api/stats")
