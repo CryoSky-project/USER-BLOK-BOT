@@ -1685,7 +1685,7 @@ async def main():
     
     # FastAPI Serverini boshlash
     port = int(os.getenv("PORT", 8080))
-    config = uvicorn.Config(app, host="0.0.0.0", port=port, loop="asyncio")
+    config = uvicorn.Config(app, host="0.0.0.0", port=port, loop="asyncio", use_colors=False)
     server = uvicorn.Server(config)
     asyncio.create_task(server.serve())
     print(f"🌐 Veb-panel ishga tushdi: http://localhost:{port}")
