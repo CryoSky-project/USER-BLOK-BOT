@@ -603,6 +603,14 @@ async def command_handler(event):
             
         await event.reply(LOCALES[CURRENT_LANG]["stop_status"])
 
+    # 8. .userbot stop
+    elif text == ".userbot stop" and (event.sender_id == me_id or event.is_private):
+        await event.reply("🔴 Userbot өшірілді. Веб-панель және тозалау жүйесі тоқтатылды.")
+        await client.disconnect()
+        if http_session:
+            await http_session.close()
+        os._exit(10)
+
 
 # =====================================================================
 # VEB PANEL LOGIKASI & ENDPOINTLAR (FASTAPI)
