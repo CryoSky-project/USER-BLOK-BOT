@@ -73,6 +73,9 @@ class LogBroadcastStream:
     def flush(self):
         self.original_stream.flush()
 
+    def __getattr__(self, name):
+        return getattr(self.original_stream, name)
+
 # Stdout va Stderr-ni qayta yo'naltirish
 sys.stdout = LogBroadcastStream(sys.stdout)
 sys.stderr = LogBroadcastStream(sys.stderr)
