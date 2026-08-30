@@ -605,11 +605,8 @@ async def command_handler(event):
 
     # 8. .userbot stop
     elif text == ".userbot stop" and (event.sender_id == me_id or event.is_private):
-        await event.reply("🔴 Userbot өшірілді. Веб-панель және тозалау жүйесі тоқтатылды.")
+        await event.reply("🔴 Userbot to'xtatildi. Lekin veb-panel hali ham faol va ishlamoqda.")
         await client.disconnect()
-        if http_session:
-            await http_session.close()
-        os._exit(10)
 
 
 # =====================================================================
@@ -694,13 +691,30 @@ async def get_dashboard():
                     </div>
                 </div>
                 <!-- Target Channel -->
-                <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-lg flex items-center gap-4 col-span-1 sm:col-span-2">
+                <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-lg flex items-center gap-4">
                     <div class="p-4 bg-sky-500/10 text-sky-400 rounded-xl">
                         <i class="fa-solid fa-bullhorn text-2xl"></i>
                     </div>
                     <div>
                         <p class="text-slate-400 text-sm font-medium" data-i18n="target_channel">Maqsadli kanal</p>
-                        <h3 id="stat-target-channel" class="text-xl font-bold text-white mt-1 truncate" data-i18n="not_selected">Hech qanday kanal tanlanmagan</h3>
+                        <h3 id="stat-target-channel" class="text-md font-bold text-white mt-1 truncate" data-i18n="not_selected">Tanlanmagan</h3>
+                    </div>
+                </div>
+                <!-- Userbot Status Card -->
+                <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-lg flex flex-col justify-between">
+                    <div class="flex items-center gap-4">
+                        <div id="userbot-status-icon" class="p-4 bg-slate-500/10 text-slate-400 rounded-xl">
+                            <i class="fa-solid fa-user-gear text-2xl"></i>
+                        </div>
+                        <div class="min-w-0">
+                            <p class="text-slate-400 text-sm font-medium">Userbot Holati</p>
+                            <h3 id="stat-userbot-status" class="text-sm font-bold text-slate-400 mt-1 truncate">Yuklanmoqda...</h3>
+                        </div>
+                    </div>
+                    <div class="flex gap-2 mt-4">
+                        <button id="btn-userbot-start" onclick="controlUserbot('start')" class="flex-1 bg-green-500/80 hover:bg-green-600 disabled:bg-slate-700 disabled:text-slate-500 text-white text-xs font-bold py-1.5 rounded-lg transition">Yoqish</button>
+                        <button id="btn-userbot-stop" onclick="controlUserbot('stop')" class="flex-1 bg-red-500/80 hover:bg-red-600 disabled:bg-slate-700 disabled:text-slate-500 text-white text-xs font-bold py-1.5 rounded-lg transition">O'chirish</button>
+                        <button id="btn-userbot-logout" onclick="controlUserbot('logout')" class="flex-1 bg-amber-500/80 hover:bg-amber-600 disabled:bg-slate-700 disabled:text-slate-500 text-white text-xs font-bold py-1.5 rounded-lg transition">Chiqish</button>
                     </div>
                 </div>
             </div>
@@ -958,6 +972,20 @@ async def get_dashboard():
                 }
             }
 
+            async function controlUserbot(action) {
+                if (action === 'logout' && !confirm("Akkauntdan chiqmoqchimisiz? Yangi QR skanerlash kerak bo'ladi.")) {
+                    return;
+                }
+                try {
+                    const response = await fetch(`/api/userbot/${action}`, { method: "POST" });
+                    const res = await response.json();
+                    alert(res.message || res.status);
+                    updateStats();
+                } catch(e) {
+                    alert("Xato: " + e.message);
+                }
+            }
+
             async function updateStats() {
                 try {
                     const response = await fetch("/api/stats");
@@ -972,7 +1000,36 @@ async def get_dashboard():
                         document.getElementById("stat-target-channel").innerText = TRANSLATIONS[currentLang]["not_selected"];
                     }
 
-                    document.getElementById("btn-start").disabled = data.blocking_active;
+                    // Userbot holatini yangilash
+                    const ubStatus = data.userbot_status;
+                    const ubUser = data.userbot_user || "";
+                    const ubElem = document.getElementById("stat-userbot-status");
+                    const ubIcon = document.getElementById("userbot-status-icon");
+                    
+                    if (ubStatus === "connected") {
+                        ubElem.innerText = "Yoqilgan: " + ubUser;
+                        ubElem.className = "text-sm font-bold text-green-400 mt-1 truncate";
+                        ubIcon.className = "p-4 bg-green-500/10 text-green-400 rounded-xl";
+                        document.getElementById("btn-userbot-start").disabled = true;
+                        document.getElementById("btn-userbot-stop").disabled = false;
+                        document.getElementById("btn-userbot-logout").disabled = false;
+                    } else if (ubStatus === "disconnected") {
+                        ubElem.innerText = "O'chirilgan";
+                        ubElem.className = "text-lg font-bold text-red-400 mt-1";
+                        ubIcon.className = "p-4 bg-red-500/10 text-red-400 rounded-xl";
+                        document.getElementById("btn-userbot-start").disabled = false;
+                        document.getElementById("btn-userbot-stop").disabled = true;
+                        document.getElementById("btn-userbot-logout").disabled = false;
+                    } else {
+                        ubElem.innerText = "Avtorizatsiyadan o'tmagan";
+                        ubElem.className = "text-xs font-bold text-amber-400 mt-1";
+                        ubIcon.className = "p-4 bg-amber-500/10 text-amber-400 rounded-xl";
+                        document.getElementById("btn-userbot-start").disabled = true;
+                        document.getElementById("btn-userbot-stop").disabled = true;
+                        document.getElementById("btn-userbot-logout").disabled = true;
+                    }
+
+                    document.getElementById("btn-start").disabled = data.blocking_active || ubStatus !== "connected";
                     document.getElementById("btn-stop").disabled = !data.blocking_active;
 
                     const tbody = document.getElementById("bots-table-body");
@@ -1311,6 +1368,21 @@ async def get_stats():
         
     uptime_sec = time.time() - START_TIME
     
+    userbot_status = "unauthorized"
+    userbot_user = ""
+    try:
+        if await client.is_user_authorized():
+            if client.is_connected():
+                userbot_status = "connected"
+                me = await client.get_me()
+                userbot_user = f"{me.first_name} (@{me.username})" if me.username else me.first_name
+            else:
+                userbot_status = "disconnected"
+        else:
+            userbot_status = "unauthorized"
+    except Exception as e:
+        print(f"Stats check error: {e}")
+        
     return {
         "blocking_active": blocking_active,
         "active_channel": {
@@ -1321,8 +1393,53 @@ async def get_stats():
         "active_bots_count": active_bots_count,
         "total_bots_count": len(bot_states),
         "uptime": format_duration(uptime_sec, CURRENT_LANG),
-        "bots": bots_list
+        "bots": bots_list,
+        "userbot_status": userbot_status,
+        "userbot_user": userbot_user
     }
+
+@app.post("/api/userbot/start")
+async def start_userbot():
+    try:
+        await client.connect()
+        if await client.is_user_authorized():
+            me = await client.get_me()
+            global me_id
+            me_id = me.id
+            return {"status": "ok", "message": f"Userbot yoqildi: {me.first_name}"}
+        else:
+            return JSONResponse(status_code=400, content={"status": "error", "message": "Akkaunt avtorizatsiyadan o'tmagan!"})
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"status": "error", "message": str(e)})
+
+@app.post("/api/userbot/stop")
+async def stop_userbot():
+    try:
+        await client.disconnect()
+        return {"status": "ok", "message": "Userbot o'chirildi."}
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"status": "error", "message": str(e)})
+
+@app.post("/api/userbot/logout")
+async def logout_userbot():
+    try:
+        if await client.is_user_authorized():
+            await client.log_out()
+        session_file_path = f"{SESSION_FILE}.session"
+        if os.path.exists(session_file_path):
+            os.remove(session_file_path)
+        journal = session_file_path + "-journal"
+        if os.path.exists(journal):
+            os.remove(journal)
+        
+        async def restart_after_delay():
+            await asyncio.sleep(2)
+            os._exit(0)
+        asyncio.create_task(restart_after_delay())
+        
+        return {"status": "ok", "message": "Muvaffaqiyatli chiqildi. Tizim qayta yuklanmoqda..."}
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"status": "error", "message": str(e)})
 
 
 class LangUpdate(BaseModel):
@@ -1432,6 +1549,13 @@ async def web_qr_worker():
         qr_state["status"] = "authorized"
         qr_state["user"] = f"{user.first_name} (@{user.username})"
         print(f"🎉 Web QR login muvaffaqiyatli: {qr_state['user']}")
+        
+        async def restart_after_delay():
+            await asyncio.sleep(3)
+            print("🔄 Yangi sessiya bilan ishga tushirish uchun qayta yuklanmoqda...")
+            os._exit(0)
+            
+        asyncio.create_task(restart_after_delay())
     except SessionPasswordNeededError:
         qr_state["status"] = "needs_password"
     except Exception as e:
@@ -1543,12 +1667,18 @@ async def main():
     # Botlarni yuklash
     await init_bots()
     
-    # Userbotni boshlash
-    await client.start()
-    me = await client.get_me()
-    me_id = me.id
-    print(f"🎉 Userbot ishga tushdi: {me.first_name} (@{me.username})")
-    print("Komandalar kutilmoqda...")
+    # Userbotni boshlash (avtorizatsiyasiz ham web serverni bloklamaydi)
+    try:
+        await client.connect()
+        if await client.is_user_authorized():
+            me = await client.get_me()
+            me_id = me.id
+            print(f"🎉 Userbot ishga tushdi: {me.first_name} (@{me.username})")
+            print("Komandalar kutilmoqda...")
+        else:
+            print("⚠️ Userbot avtorizatsiyadan o'tmagan! Iltimos, veb-panel orqali ulaning.")
+    except Exception as e:
+        print(f"❌ Userbotni boshlashda xatolik: {e}")
     
     # FastAPI Serverini boshlash
     port = int(os.getenv("PORT", 8080))
@@ -1560,8 +1690,13 @@ async def main():
     # Self-ping vazifasini boshlash
     asyncio.create_task(self_ping_loop())
     
+    # Veb-panel va botlar har doim ishlab turishi uchun asosiy loop
     try:
-        await client.run_until_disconnected()
+        if await client.is_user_authorized() and client.is_connected():
+            await client.run_until_disconnected()
+        else:
+            while True:
+                await asyncio.sleep(3600)
     finally:
         if http_session:
             await http_session.close()
